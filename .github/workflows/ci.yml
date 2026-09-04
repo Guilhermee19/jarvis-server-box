@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Checagem de sintaxe
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: node --check em todos os .js / .mjs
+        run: |
+          set -e
+          files=$(git ls-files '*.js' '*.mjs')
+          if [ -z "$files" ]; then
+            echo "Nenhum arquivo JavaScript encontrado."
+            exit 0
+          fi
+          for f in $files; do
+            echo "-> $f"
+            node --check "$f"
+          done
+          echo "Sintaxe OK."
+
+      # O repo tem testes em test/. Descomente para rodá-los no CI:
+      # - name: Testes
+      #   run: node --test test/*.test.mjs
+
+  promote:
+    name: Promover main para production
+    needs: check
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: git push main -> production
+        run: git push origin HEAD:refs/heads/production

@@ -1,10 +1,11 @@
 {
-  "name": "server-box",
+  "name": "jarvis-server-box",
   "version": "0.1.0",
-  "private": false,
+  "private": true,
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test test/*.test.mjs"
   },
   "description": "Painel de status para servidor caseiro em Android (Termux) — zero deps, Node puro."
 }

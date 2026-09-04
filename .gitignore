@@ -1,3 +1,5 @@
 .j5-pin
 server.log
+deploy.log
+nohup.out
 node_modules/
