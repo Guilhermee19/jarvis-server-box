@@ -1,0 +1,4 @@
+# jarvis-server-box — auto-deploy + watchdog
+# Instalar no Termux com:  crontab ~/server-box/crontab.txt
+# Conferir com:            crontab -l
+*/5 * * * * sh /data/data/com.termux/files/home/server-box/deploy.sh >> /data/data/com.termux/files/home/servidor/deploy.log 2>&1

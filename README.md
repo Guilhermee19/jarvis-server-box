@@ -86,13 +86,14 @@ pkg install -y cronie
 sv-enable crond
 
 mkdir -p ~/servidor
-crontab -e
+crontab ~/server-box/crontab.txt
+crontab -l
 ```
 
-Linha do crontab:
+O arquivo [`crontab.txt`](crontab.txt) já vem com a linha pronta (caminhos absolutos, porque o cron do Termux não expande `~`):
 
 ```
-*/5 * * * * sh ~/server-box/deploy.sh >> ~/servidor/deploy.log 2>&1
+*/5 * * * * sh /data/data/com.termux/files/home/server-box/deploy.sh >> /data/data/com.termux/files/home/servidor/deploy.log 2>&1
 ```
 
 Acompanhar:
