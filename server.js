@@ -3,8 +3,10 @@ import { readFile } from "node:fs/promises";
 import { join, extname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { networkInterfaces } from "node:os";
+import { timingSafeEqual } from "node:crypto";
 import { createMonitor } from "./monitor.js";
 import { createDigestStats } from "./digest-stats.mjs";
+import { ensurePin, isLoopback, pinCookie, pinFromCookie, PIN_RE } from "./auth.js";
 
 const MIME = {
   ".html": "text/html",
@@ -27,6 +29,14 @@ const JSON_HEADERS = {
   ...SEC_HEADERS,
 };
 
+// Rotas que nunca pedem PIN — usadas por watchdog e monitoramento externo.
+const PUBLIC_PATHS = new Set(["/health"]);
+
+// Um PIN de 4 dígitos são 10 mil combinações: sem limite, dá pra varrer tudo
+// em minutos. Cinco erros travam o IP por 15 minutos.
+const MAX_TRIES = 5;
+const LOCK_MS = 15 * 60 * 1000;
+
 function fail(res, err) {
   console.error("[server-box] monitor error:", err);
   res.writeHead(500, JSON_HEADERS);
@@ -45,15 +55,147 @@ function bootIps() {
   return ips;
 }
 
+/** Comparação de tempo constante; falsa também quando os tamanhos diferem. */
+function safeEqual(a, b) {
+  const ba = Buffer.from(String(a));
+  const bb = Buffer.from(String(b));
+  if (ba.length !== bb.length) return false;
+  return timingSafeEqual(ba, bb);
+}
+
+function loginPage(erro = "") {
+  return `<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis Server Box</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; min-height:100vh; display:grid; place-items:center;
+         background:#0b0b0c; color:#e7e7e9;
+         font:16px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif; }
+  form { width:min(320px, 88vw); display:grid; gap:14px; }
+  h1 { font-size:18px; margin:0 0 4px; font-weight:600; }
+  p { margin:0; color:#8b8b93; font-size:14px; }
+  input { font:inherit; letter-spacing:.5em; text-align:center; padding:14px;
+          border-radius:10px; border:1px solid #2a2a2e; background:#141416;
+          color:inherit; }
+  input:focus { outline:2px solid #3b82f6; outline-offset:1px; }
+  button { font:inherit; font-weight:600; padding:12px; border:0;
+           border-radius:10px; background:#3b82f6; color:#fff; cursor:pointer; }
+  .erro { color:#f87171; font-size:14px; }
+</style>
+<form method="POST" action="/login">
+  <div>
+    <h1>Jarvis Server Box</h1>
+    <p>Digite o PIN de 4 dígitos.</p>
+  </div>
+  <input name="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4"
+         autocomplete="off" autofocus aria-label="PIN">
+  ${erro ? `<p class="erro">${erro}</p>` : ""}
+  <button type="submit">Entrar</button>
+</form>
+</html>`;
+}
+
+function readBody(req, limit = 1024) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks = [];
+    req.on("data", c => {
+      size += c.length;
+      if (size > limit) { req.destroy(); reject(new Error("body grande demais")); return; }
+      chunks.push(c);
+    });
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    req.on("error", reject);
+  });
+}
+
 export async function startServer(opts = {}) {
   const root = opts.root ?? join(import.meta.dirname, "public");
   const port = opts.port ?? (Number(process.env.PORT) || 8080);
   const monitor = createMonitor();
   const digestStats = createDigestStats({ newsDir: opts.newsDir });
 
+  // Desligar exige intenção explícita: opts.requirePin === false (testes) ou
+  // SERVERBOX_PIN=off no ambiente.
+  const requirePin = opts.requirePin ?? process.env.SERVERBOX_PIN !== "off";
+  const pin = requirePin ? await ensurePin(opts.pinRoot) : null;
+  // Só os testes desligam isso, para conseguirem exercitar o caminho do PIN.
+  const trustLoopback = opts.trustLoopback ?? true;
+
+  const failures = new Map();
+
+  const lockedUntil = ip => {
+    const f = failures.get(ip);
+    if (!f) return 0;
+    if (Date.now() > f.until) { failures.delete(ip); return 0; }
+    return f.count >= MAX_TRIES ? f.until : 0;
+  };
+
+  const registerFailure = ip => {
+    const f = failures.get(ip) ?? { count: 0, until: 0 };
+    f.count += 1;
+    f.until = Date.now() + LOCK_MS;
+    failures.set(ip, f);
+  };
+
+  const authorized = req => {
+    if (!pin) return true;
+    // Loopback é o próprio aparelho: quem já está no Termux não precisa de PIN.
+    if (trustLoopback && isLoopback(req.socket.remoteAddress)) return true;
+    const given = pinFromCookie(req.headers.cookie);
+    return typeof given === "string" && safeEqual(given, pin);
+  };
+
   const server = createServer((req, res) => {
     const url = new URL(req.url, "http://x");
+    const ip = req.socket.remoteAddress || "";
     const ok = body => { res.writeHead(200, JSON_HEADERS); res.end(JSON.stringify(body)); };
+
+    const sendLogin = (status, erro) => {
+      const html = loginPage(erro);
+      res.writeHead(status, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store",
+        ...SEC_HEADERS,
+      });
+      res.end(html);
+    };
+
+    if (url.pathname === "/login" && req.method === "POST") {
+      const until = lockedUntil(ip);
+      if (until) {
+        const min = Math.ceil((until - Date.now()) / 60000);
+        sendLogin(429, `Tentativas demais. Tente de novo em ${min} min.`);
+        return;
+      }
+      readBody(req)
+        .then(body => {
+          const given = new URLSearchParams(body).get("pin") ?? "";
+          if (PIN_RE.test(given) && safeEqual(given, pin)) {
+            failures.delete(ip);
+            res.writeHead(302, { Location: "/", "Set-Cookie": pinCookie(pin), ...SEC_HEADERS });
+            res.end();
+            return;
+          }
+          registerFailure(ip);
+          sendLogin(401, "PIN incorreto.");
+        })
+        .catch(() => sendLogin(400, "Requisição inválida."));
+      return;
+    }
+
+    if (!PUBLIC_PATHS.has(url.pathname) && !authorized(req)) {
+      if (url.pathname.startsWith("/api/")) {
+        res.writeHead(401, JSON_HEADERS);
+        res.end(JSON.stringify({ ok: false, error: "não autorizado" }));
+        return;
+      }
+      sendLogin(401);
+      return;
+    }
 
     if (url.pathname === "/health") {
       res.writeHead(200, JSON_HEADERS);
@@ -105,16 +247,18 @@ export async function startServer(opts = {}) {
     server.close(() => resolve());
   });
 
-  return { port: server.address().port, close };
+  return { port: server.address().port, close, pin };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   startServer()
-    .then(({ port }) => {
+    .then(({ port, pin }) => {
       const ips = bootIps();
       console.log(`server-box ouvindo em http://0.0.0.0:${port}`);
       if (ips.lan) console.log(`  LAN:        http://${ips.lan}:${port}`);
       if (ips.tailscale) console.log(`  Tailscale:  http://${ips.tailscale}:${port}  (qualquer dispositivo, fora de casa)`);
+      if (pin) console.log(`  PIN:        ${pin}  (guardado em .j5-pin; loopback não precisa)`);
+      else console.log("  PIN:        desligado (SERVERBOX_PIN=off)");
     })
     .catch(err => { console.error(err); process.exitCode = 1; });
 }

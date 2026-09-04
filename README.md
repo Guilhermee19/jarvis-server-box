@@ -148,9 +148,55 @@ ou
 node --test test/*.test.mjs
 ```
 
+## Acesso de fora de casa (Tailscale)
+
+Sem abrir porta no roteador e sem expor nada para a internet: o Tailscale monta uma rede privada entre os seus dispositivos.
+
+1. Instale o app **Tailscale** no celular (Play Store) e faça login.
+2. Instale nos outros dispositivos seus, com a mesma conta.
+3. No celular, o aparelho ganha um IP `100.x.y.z`. O `server.js` detecta esse endereço sozinho e imprime a URL no boot.
+
+Acesse de qualquer rede em `http://100.x.y.z:8080`.
+
+Para um nome melhor, crie no seu DNS um registro A `api.iamgui.dev → 100.x.y.z`. O DNS é público, mas o IP só é roteável dentro da sua tailnet — quem não estiver nela não chega a lugar nenhum.
+
+> Deixar o painel realmente público (Cloudflare Tunnel e afins) exige autenticação na borda. O PIN abaixo é o mínimo, não o suficiente para exposição na internet aberta.
+
 ## Segurança
 
-- Acesso só pela rede local (ou Tailscale). Não abra porta no roteador.
-- Headers de segurança básicos (nosniff, frame deny, referrer policy).
+### PIN
+
+O painel pede um **PIN de 4 dígitos**. Ele é gerado no primeiro start e guardado em `.j5-pin` (permissão `600`, fora do git). Para ver qual é:
+
+```bash
+cat ~/server-box/.j5-pin
+```
+
+Ele também aparece no log do boot:
+
+```bash
+tail -n 20 ~/servidor/server.log
+```
+
+Regras:
+
+- **Loopback não pede PIN.** Quem já está no Termux do próprio aparelho está dentro.
+- **`/health` fica aberto**, de propósito — é o que watchdog e monitoramento externo consultam.
+- **Cinco erros travam o IP por 15 minutos.** São só 10 mil combinações; sem esse limite, dá pra varrer todas em minutos.
+- O cookie é `HttpOnly`, `SameSite=Lax`, válido por 180 dias.
+
+Para desligar (rede confiável, ou atrás de autenticação na borda):
+
+```bash
+SERVERBOX_PIN=off node server.js
+```
+
+Trocar o PIN: apague o `.j5-pin` e reinicie — um novo é sorteado.
+
+### Resto
+
+- Não abra porta no roteador. Acesso pela rede local ou pela tailnet.
+- Headers básicos: `nosniff`, `frame-deny`, `referrer-policy`.
+- O PIN viaja em **HTTP puro** na rede local. Contra alguém já dentro do seu Wi-Fi com capacidade de sniffing, ele não protege — para isso, é o Tailscale que faz o trabalho, com o tráfego criptografado.
 - A deploy key do celular é **read-only** — se o aparelho for comprometido, ninguém escreve no repositório.
 - `.j5-pin`, logs e `nohup.out` ficam fora do git.
