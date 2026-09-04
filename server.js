@@ -6,6 +6,7 @@ import { networkInterfaces } from "node:os";
 import { timingSafeEqual } from "node:crypto";
 import { createMonitor } from "./monitor.js";
 import { createDigestStats } from "./digest-stats.mjs";
+import { createFiles, filesDir } from "./files.js";
 import { ensurePin, isLoopback, pinCookie, pinFromCookie, PIN_RE } from "./auth.js";
 
 const MIME = {
@@ -41,6 +42,77 @@ function fail(res, err) {
   console.error("[server-box] monitor error:", err);
   res.writeHead(500, JSON_HEADERS);
   res.end(JSON.stringify({ ok: false, error: "não foi possível ler o status" }));
+}
+
+/** Erro de rota: usa err.status quando o módulo definiu um, senão 500. */
+function failFile(res, err) {
+  const status = err && err.status ? err.status : 500;
+  if (status >= 500) console.error("[server-box] files error:", err);
+  res.writeHead(status, JSON_HEADERS);
+  res.end(JSON.stringify({ ok: false, error: err.message || "erro ao acessar o arquivo" }));
+}
+
+/**
+ * `Range: bytes=a-b` — é o que faz vídeo e áudio darem seek no navegador.
+ * Retorna null quando não há range, ou "invalid" quando o pedido não cabe.
+ */
+function parseRange(header, size) {
+  if (!header) return null;
+  const m = /^bytes=(\d*)-(\d*)$/.exec(String(header).trim());
+  if (!m) return "invalid";
+  const [, rawStart, rawEnd] = m;
+  let start;
+  let end;
+  if (rawStart === "") {
+    if (rawEnd === "") return "invalid";
+    // Sufixo: os últimos N bytes.
+    start = Math.max(0, size - Number(rawEnd));
+    end = size - 1;
+  } else {
+    start = Number(rawStart);
+    end = rawEnd === "" ? size - 1 : Math.min(Number(rawEnd), size - 1);
+  }
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start > end || start >= size) return "invalid";
+  return { start, end };
+}
+
+/**
+ * Entrega um arquivo enviado por upload. Conteúdo de terceiro nunca é confiável:
+ * vai com sandbox e sem script, e só abre na aba quando é mídia, PDF ou texto puro
+ * — HTML e SVG baixam, para não virarem script rodando na origem do painel.
+ */
+function serveFile(req, res, info, download) {
+  const inline = info.inline && !download;
+  const headers = {
+    "Content-Type": info.type,
+    "Content-Disposition": `${inline ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(info.name)}`,
+    "Accept-Ranges": "bytes",
+    "Cache-Control": "private, no-cache",
+    "Content-Security-Policy": "default-src 'none'; sandbox",
+    ...SEC_HEADERS,
+  };
+
+  const range = parseRange(req.headers.range, info.size);
+  if (range === "invalid") {
+    res.writeHead(416, { "Content-Range": `bytes */${info.size}`, ...JSON_HEADERS });
+    res.end(JSON.stringify({ ok: false, error: "faixa inválida" }));
+    return;
+  }
+
+  const start = range ? range.start : 0;
+  const end = range ? range.end : Math.max(0, info.size - 1);
+  headers["Content-Length"] = String(info.size === 0 ? 0 : end - start + 1);
+  if (range) headers["Content-Range"] = `bytes ${start}-${end}/${info.size}`;
+
+  res.writeHead(range ? 206 : 200, headers);
+  if (req.method === "HEAD" || info.size === 0) {
+    res.end();
+    return;
+  }
+  const stream = info.stream({ start, end });
+  stream.on("error", () => res.destroy());
+  res.on("close", () => stream.destroy());
+  stream.pipe(res);
 }
 
 function bootIps() {
@@ -117,6 +189,7 @@ export async function startServer(opts = {}) {
   const port = opts.port ?? (Number(process.env.PORT) || 8080);
   const monitor = createMonitor();
   const digestStats = createDigestStats({ newsDir: opts.newsDir });
+  const files = createFiles({ dir: opts.filesDir, maxBytes: opts.maxBytes });
 
   // Desligar exige intenção explícita: opts.requirePin === false (testes) ou
   // SERVERBOX_PIN=off no ambiente.
@@ -152,7 +225,7 @@ export async function startServer(opts = {}) {
   const server = createServer((req, res) => {
     const url = new URL(req.url, "http://x");
     const ip = req.socket.remoteAddress || "";
-    const ok = body => { res.writeHead(200, JSON_HEADERS); res.end(JSON.stringify(body)); };
+    const ok = body => { res.writeHead(200, JSON_HEADERS); res.end(JSON.stringify({ ok: true, ...body })); };
 
     const sendLogin = (status, erro) => {
       const html = loginPage(erro);
@@ -206,7 +279,7 @@ export async function startServer(opts = {}) {
     if (url.pathname === "/api/monitor") {
       Promise.resolve()
         .then(() => monitor.get())
-        .then(d => ok({ ok: true, ...d }))
+        .then(d => ok(d))
         .catch(err => fail(res, err));
       return;
     }
@@ -214,8 +287,40 @@ export async function startServer(opts = {}) {
     if (url.pathname === "/api/digest-stats") {
       Promise.resolve()
         .then(() => digestStats.get())
-        .then(d => ok({ ok: true, ...d }))
+        .then(d => ok(d))
         .catch(err => fail(res, err));
+      return;
+    }
+
+    // Arquivos: o painel vira também uma gaveta acessível de qualquer lugar
+    // (Tailscale + PIN). Upload é o corpo cru da requisição — sem multipart,
+    // sem dependência, e o arquivo vai direto para o disco em streaming.
+    if (url.pathname === "/api/files" && (req.method === "GET" || req.method === "HEAD")) {
+      files.list().then(ok).catch(err => failFile(res, err));
+      return;
+    }
+
+    if (url.pathname === "/api/files" && req.method === "POST") {
+      files
+        .save(req, url.searchParams.get("name"))
+        .then(file => ok({ file }))
+        .catch(err => failFile(res, err));
+      return;
+    }
+
+    if (url.pathname.startsWith("/api/files/") && req.method === "DELETE") {
+      files
+        .remove(decodeURIComponent(url.pathname.slice("/api/files/".length)))
+        .then(removed => ok(removed))
+        .catch(err => failFile(res, err));
+      return;
+    }
+
+    if (url.pathname.startsWith("/files/") && (req.method === "GET" || req.method === "HEAD")) {
+      files
+        .open(decodeURIComponent(url.pathname.slice("/files/".length)))
+        .then(info => serveFile(req, res, info, url.searchParams.has("download")))
+        .catch(err => failFile(res, err));
       return;
     }
 
@@ -257,6 +362,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       console.log(`server-box ouvindo em http://0.0.0.0:${port}`);
       if (ips.lan) console.log(`  LAN:        http://${ips.lan}:${port}`);
       if (ips.tailscale) console.log(`  Tailscale:  http://${ips.tailscale}:${port}  (qualquer dispositivo, fora de casa)`);
+      console.log(`  Arquivos:   ${filesDir()}`);
       if (pin) console.log(`  PIN:        ${pin}  (guardado em .j5-pin; loopback não precisa)`);
       else console.log("  PIN:        desligado (SERVERBOX_PIN=off)");
     })
