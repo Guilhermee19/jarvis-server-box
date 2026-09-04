@@ -102,6 +102,24 @@ Acompanhar:
 tail -f ~/servidor/deploy.log
 ```
 
+### Voltar sozinho depois de reiniciar
+
+O app **Termux:Boot** precisa estar instalado e **aberto pelo menos uma vez**. Depois:
+
+```bash
+mkdir -p ~/.termux/boot
+ln -sf ~/server-box/boot.sh ~/.termux/boot/start.sh
+chmod +x ~/server-box/boot.sh
+```
+
+O symlink aponta para o [`boot.sh`](boot.sh) do repositório, então o script de boot se atualiza sozinho a cada deploy. Ele segura o wake-lock, sobe os serviços do `termux-services`, espera a rede voltar e chama o `deploy.sh` — que atualiza se houver commit novo e, em qualquer caso, garante o painel no ar.
+
+Testar sem reiniciar:
+
+```bash
+sh ~/.termux/boot/start.sh
+```
+
 ### Deploy key
 
 O repositório é privado, então o Termux precisa de uma **deploy key** só de leitura:
