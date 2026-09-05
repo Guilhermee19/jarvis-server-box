@@ -292,18 +292,30 @@ export async function startServer(opts = {}) {
       return;
     }
 
-    // Arquivos: o painel vira também uma gaveta acessível de qualquer lugar
-    // (Tailscale + PIN). Upload é o corpo cru da requisição — sem multipart,
-    // sem dependência, e o arquivo vai direto para o disco em streaming.
+    // Arquivos: o painel vira também uma gaveta com pastas, acessível de
+    // qualquer lugar (Tailscale + PIN). Upload é o corpo cru da requisição —
+    // sem multipart, sem dependência, e o arquivo vai direto ao disco em
+    // streaming. `path` diz em que pasta do cofre a operação acontece.
     if (url.pathname === "/api/files" && (req.method === "GET" || req.method === "HEAD")) {
-      files.list().then(ok).catch(err => failFile(res, err));
+      files
+        .list(url.searchParams.get("path"))
+        .then(ok)
+        .catch(err => failFile(res, err));
       return;
     }
 
     if (url.pathname === "/api/files" && req.method === "POST") {
       files
-        .save(req, url.searchParams.get("name"))
+        .save(req, url.searchParams.get("path"), url.searchParams.get("name"))
         .then(file => ok({ file }))
+        .catch(err => failFile(res, err));
+      return;
+    }
+
+    if (url.pathname === "/api/folders" && req.method === "POST") {
+      files
+        .mkfolder(url.searchParams.get("path"))
+        .then(folder => ok({ folder }))
         .catch(err => failFile(res, err));
       return;
     }

@@ -1,6 +1,6 @@
 import { createReadStream, createWriteStream } from "node:fs";
-import { mkdir, readdir, stat, rename, unlink } from "node:fs/promises";
-import { join, extname, basename } from "node:path";
+import { mkdir, readdir, stat, rename, rm, unlink } from "node:fs/promises";
+import { join, extname, basename, resolve, sep } from "node:path";
 import { homedir } from "node:os";
 import { randomUUID } from "node:crypto";
 
@@ -54,20 +54,46 @@ export function isInline(type) {
 }
 
 /**
- * Reduz o nome enviado a um nome de arquivo simples: sem diretório, sem
- * caractere de controle, sem começar com ponto. Retorna null se não sobrar nada.
+ * Reduz um pedaço de caminho a um nome de arquivo simples: sem diretório, sem
+ * caractere de controle, sem começar com ponto. Retorna null se não sobrar nada
+ * — é assim que "." e ".." morrem antes de virarem travessia de diretório.
  */
 export function safeName(raw) {
-  // Caminho do Windows vira caminho comum antes do basename.
+  // O caminho do Windows (barra invertida) vira caminho comum.
   const flat = String(raw ?? "").replace(/[\u005c]/g, "/");
   const clean = basename(flat)
     .replace(/[\u0000-\u001f\u007f<>:"|?*/]/g, "_")
     .replace(/^\.+/, "")
     .trim();
-  if (!clean || clean === "." || clean === "..") return null;
+  if (!clean) return null;
   if (clean.length <= 120) return clean;
   const ext = extname(clean).slice(0, 12);
   return clean.slice(0, 120 - ext.length) + ext;
+}
+
+/**
+ * Caminho relativo dentro do cofre, sempre com "/" e sempre limpo: cada
+ * segmento passa pelo safeName e o que não sobrevive é descartado.
+ */
+export function safePath(raw) {
+  return String(raw ?? "")
+    .replace(/[\u005c]/g, "/")
+    .split("/")
+    .map(safeName)
+    .filter(Boolean)
+    .slice(0, 12)
+    .join("/");
+}
+
+/** Pasta que contém o caminho dado, ou null quando já está na raiz. */
+export function parentPath(rel) {
+  if (!rel) return null;
+  const cut = rel.lastIndexOf("/");
+  return cut === -1 ? "" : rel.slice(0, cut);
+}
+
+function fail(status, message) {
+  return Object.assign(new Error(message), { status });
 }
 
 /** Acrescenta -1, -2… enquanto o nome já existir na pasta. */
@@ -95,36 +121,85 @@ export function createFiles(opts = {}) {
   const maxBytes =
     opts.maxBytes ?? (Number(process.env.SERVERBOX_MAX_UPLOAD) || DEFAULT_MAX_BYTES);
   const ready = mkdir(dir, { recursive: true }).catch(() => {});
+  const root = resolve(dir);
 
-  /** Caminho absoluto de um arquivo já validado, ou null se o nome for inválido. */
-  const pathOf = raw => {
-    const name = safeName(raw);
-    return name ? { name, path: join(dir, name) } : null;
+  /**
+   * Caminho absoluto para um caminho relativo já higienizado. O resolve final
+   * é a última trava: nada pode terminar fora da raiz do cofre.
+   */
+  const absolute = rel => {
+    const clean = safePath(rel);
+    const full = clean ? join(root, clean) : root;
+    if (resolve(full) !== root && !resolve(full).startsWith(root + sep)) {
+      throw fail(400, "caminho inválido");
+    }
+    return { rel: clean, full };
   };
 
-  async function list() {
+  async function list(rel) {
     await ready;
-    const entries = await readdir(dir, { withFileTypes: true });
+    const here = absolute(rel);
+    let entries;
+    try {
+      entries = await readdir(here.full, { withFileTypes: true });
+    } catch {
+      throw fail(404, "pasta não encontrada");
+    }
+
+    const folders = [];
     const files = [];
     for (const entry of entries) {
       // Uploads em andamento gravam .tmp-*; não aparecem até terminar.
-      if (!entry.isFile() || entry.name.startsWith(".tmp-")) continue;
+      if (entry.name.startsWith(".tmp-")) continue;
+      const childRel = here.rel ? `${here.rel}/${entry.name}` : entry.name;
+      if (entry.isDirectory()) {
+        let items = 0;
+        try {
+          items = (await readdir(join(here.full, entry.name))).length;
+        } catch {
+          // pasta sem permissão de leitura — mostra vazia
+        }
+        folders.push({ name: entry.name, path: childRel, items });
+        continue;
+      }
+      if (!entry.isFile()) continue;
       try {
-        const info = await stat(join(dir, entry.name));
+        const info = await stat(join(here.full, entry.name));
+        const type = fileType(entry.name);
         files.push({
           name: entry.name,
+          path: childRel,
           size: info.size,
           mtime: info.mtimeMs,
-          type: fileType(entry.name),
-          inline: isInline(fileType(entry.name)),
+          type,
+          inline: isInline(type),
         });
       } catch {
         // sumiu entre o readdir e o stat — ignora
       }
     }
+
+    folders.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
     files.sort((a, b) => b.mtime - a.mtime);
-    const total = files.reduce((sum, f) => sum + f.size, 0);
-    return { dir, files, total, count: files.length, maxBytes };
+    const total = files.reduce((sum, file) => sum + file.size, 0);
+    return {
+      dir,
+      path: here.rel,
+      parent: parentPath(here.rel),
+      folders,
+      files,
+      total,
+      count: files.length,
+      maxBytes,
+    };
+  }
+
+  async function mkfolder(rel) {
+    await ready;
+    const here = absolute(rel);
+    if (!here.rel) throw fail(400, "nome de pasta inválido");
+    await mkdir(here.full, { recursive: true });
+    return { path: here.rel, name: basename(here.rel) };
   }
 
   /**
@@ -132,29 +207,31 @@ export function createFiles(opts = {}) {
    * RAM, então nada de juntar o arquivo inteiro na memória. Escreve num .tmp-*
    * e só renomeia no fim, para uma queda no meio não deixar arquivo pela metade.
    */
-  async function save(req, rawName) {
+  async function save(req, rel, rawName) {
     await ready;
     const wanted = safeName(rawName);
-    if (!wanted) throw Object.assign(new Error("nome de arquivo inválido"), { status: 400 });
+    if (!wanted) throw fail(400, "nome de arquivo inválido");
+    const here = absolute(rel);
+    await mkdir(here.full, { recursive: true });
 
-    const tmp = join(dir, `.tmp-${randomUUID()}`);
+    const tmp = join(here.full, `.tmp-${randomUUID()}`);
     const out = createWriteStream(tmp);
     let size = 0;
     let tooBig = false;
 
     try {
-      await new Promise((resolve, reject) => {
+      await new Promise((done, reject) => {
         req.on("data", chunk => {
           size += chunk.length;
           if (size > maxBytes && !tooBig) {
             tooBig = true;
             req.destroy();
-            reject(Object.assign(new Error("arquivo grande demais"), { status: 413 }));
+            reject(fail(413, "arquivo grande demais"));
           }
         });
         req.on("error", reject);
         out.on("error", reject);
-        out.on("finish", resolve);
+        out.on("finish", done);
         req.pipe(out);
       });
     } catch (err) {
@@ -165,48 +242,59 @@ export function createFiles(opts = {}) {
 
     if (!size) {
       await unlink(tmp).catch(() => {});
-      throw Object.assign(new Error("arquivo vazio"), { status: 400 });
+      throw fail(400, "arquivo vazio");
     }
 
-    const name = await uniqueName(dir, wanted);
-    await rename(tmp, join(dir, name));
-    return { name, size, type: fileType(name), inline: isInline(fileType(name)) };
+    const name = await uniqueName(here.full, wanted);
+    await rename(tmp, join(here.full, name));
+    const type = fileType(name);
+    return {
+      name,
+      path: here.rel ? `${here.rel}/${name}` : name,
+      size,
+      type,
+      inline: isInline(type),
+    };
   }
 
-  async function remove(rawName) {
+  /** Apaga arquivo ou pasta (com o que houver dentro). A raiz nunca sai. */
+  async function remove(rel) {
     await ready;
-    const found = pathOf(rawName);
-    if (!found) throw Object.assign(new Error("nome de arquivo inválido"), { status: 400 });
+    const here = absolute(rel);
+    if (!here.rel) throw fail(400, "caminho inválido");
     try {
-      await unlink(found.path);
+      await stat(here.full);
     } catch {
-      throw Object.assign(new Error("arquivo não encontrado"), { status: 404 });
+      throw fail(404, "arquivo não encontrado");
     }
-    return { name: found.name };
+    await rm(here.full, { recursive: true, force: true });
+    return { path: here.rel, name: basename(here.rel) };
   }
 
-  /** Metadados + fábrica de stream, para o servidor montar a resposta (inclusive Range). */
-  async function open(rawName) {
+  /** Metadados + fábrica de stream, para o servidor montar a resposta (Range inclusive). */
+  async function open(rel) {
     await ready;
-    const found = pathOf(rawName);
-    if (!found) throw Object.assign(new Error("nome de arquivo inválido"), { status: 400 });
+    const here = absolute(rel);
+    if (!here.rel) throw fail(400, "caminho inválido");
     let info;
     try {
-      info = await stat(found.path);
+      info = await stat(here.full);
     } catch {
-      throw Object.assign(new Error("arquivo não encontrado"), { status: 404 });
+      throw fail(404, "arquivo não encontrado");
     }
-    if (!info.isFile()) throw Object.assign(new Error("arquivo não encontrado"), { status: 404 });
-    const type = fileType(found.name);
+    if (!info.isFile()) throw fail(404, "arquivo não encontrado");
+    const name = basename(here.rel);
+    const type = fileType(name);
     return {
-      name: found.name,
+      name,
+      path: here.rel,
       size: info.size,
       mtime: info.mtimeMs,
       type,
       inline: isInline(type),
-      stream: range => createReadStream(found.path, range),
+      stream: range => createReadStream(here.full, range),
     };
   }
 
-  return { dir, maxBytes, list, save, remove, open };
+  return { dir, maxBytes, list, save, remove, open, mkfolder };
 }

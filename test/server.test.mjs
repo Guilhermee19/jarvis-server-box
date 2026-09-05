@@ -121,6 +121,8 @@ test("arquivos: upload, listagem, leitura com Range e remoção", async t => {
   const vazia = await (await fetch(`${base}/api/files`)).json();
   assert.equal(vazia.ok, true);
   assert.deepEqual(vazia.files, []);
+  assert.deepEqual(vazia.folders, []);
+  assert.equal(vazia.path, "");
   assert.equal(vazia.total, 0);
 
   // Upload é o corpo cru; o nome vem na query.
@@ -199,4 +201,65 @@ test("arquivos ficam atrás do PIN, como o resto do painel", async t => {
 
   const cookie = `j5_pin=${running.pin}`;
   assert.equal((await fetch(`${base}/api/files`, { headers: { cookie } })).status, 200);
+});
+
+test("pastas: criar, guardar dentro, navegar e apagar em cascata", async t => {
+  const dir = await mkdtemp(join(tmpdir(), "server-box-files-"));
+  const running = await startServer({ port: 0, root: publicRoot, filesDir: dir });
+  t.after(async () => {
+    await running.close();
+    await rm(dir, { recursive: true, force: true });
+  });
+  const base = `http://127.0.0.1:${running.port}`;
+
+  const criada = await fetch(`${base}/api/folders?path=Fotos`, { method: "POST" });
+  assert.equal(criada.status, 200);
+  assert.equal((await criada.json()).folder.path, "Fotos");
+
+  // Sub-pasta: o caminho aceita níveis.
+  await fetch(`${base}/api/folders?path=${encodeURIComponent("Fotos/2024")}`, { method: "POST" });
+
+  const enviado = await fetch(`${base}/api/files?path=Fotos&name=foto.txt`, {
+    method: "POST",
+    body: "conteudo",
+  });
+  assert.equal((await enviado.json()).file.path, "Fotos/foto.txt");
+
+  // A raiz mostra a pasta, não o arquivo que está dentro dela.
+  const raiz = await (await fetch(`${base}/api/files`)).json();
+  assert.deepEqual(
+    raiz.folders.map(f => f.name),
+    ["Fotos"],
+  );
+  assert.equal(raiz.folders[0].items, 2);
+  assert.deepEqual(raiz.files, []);
+
+  // Dentro da pasta: o arquivo e a sub-pasta, com o caminho de volta.
+  const dentro = await (await fetch(`${base}/api/files?path=Fotos`)).json();
+  assert.equal(dentro.path, "Fotos");
+  assert.equal(dentro.parent, "");
+  assert.deepEqual(
+    dentro.folders.map(f => f.name),
+    ["2024"],
+  );
+  assert.deepEqual(
+    dentro.files.map(f => f.path),
+    ["Fotos/foto.txt"],
+  );
+
+  const lido = await fetch(`${base}/files/${encodeURIComponent("Fotos/foto.txt")}`);
+  assert.equal(lido.status, 200);
+  assert.equal(await lido.text(), "conteudo");
+
+  // Travessia não escapa da raiz do cofre: vira pasta de nome saneado.
+  const fuga = await fetch(`${base}/api/folders?path=${encodeURIComponent("../fora")}`, {
+    method: "POST",
+  });
+  assert.equal((await fuga.json()).folder.path, "fora");
+
+  // Apagar a pasta leva junto o que está dentro.
+  assert.equal((await fetch(`${base}/api/files/Fotos`, { method: "DELETE" })).status, 200);
+  const depois = await (await fetch(`${base}/api/files`)).json();
+  assert.ok(!depois.folders.some(f => f.name === "Fotos"));
+  assert.equal((await fetch(`${base}/api/files?path=Fotos`)).status, 404);
 });
