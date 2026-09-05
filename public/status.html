@@ -86,10 +86,10 @@
         min-width: 320px;
         min-height: 100vh;
         margin: 0;
-        padding: max(20px, env(safe-area-inset-top))
-          max(16px, env(safe-area-inset-right))
-          max(40px, env(safe-area-inset-bottom))
-          max(16px, env(safe-area-inset-left));
+        padding: max(12px, env(safe-area-inset-top))
+          max(12px, env(safe-area-inset-right))
+          max(12px, env(safe-area-inset-bottom))
+          max(12px, env(safe-area-inset-left));
         background: var(--bg);
         color: var(--ink);
         font-family: var(--mono);
@@ -294,10 +294,15 @@
       /* Cabeçalho */
       .topbar {
         display: flex;
-        align-items: flex-start;
+        flex-wrap: wrap;
+        align-items: center;
         justify-content: space-between;
-        gap: var(--space-lg);
-        padding-bottom: var(--space-lg);
+        gap: var(--space-sm) var(--space-md);
+        padding-bottom: var(--space-md);
+      }
+      .topbar-main {
+        flex: 1 1 180px;
+        min-width: 0;
       }
       .eyebrow,
       .section-kicker {
@@ -309,25 +314,25 @@
         text-transform: uppercase;
       }
       .topbar h1 {
-        margin-top: 8px;
-        font-size: clamp(22px, 5.4vw, 32px);
+        margin-top: 3px;
+        font-size: clamp(17px, 4.4vw, 24px);
         font-weight: 700;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.12em;
         line-height: 1.1;
         text-transform: uppercase;
         text-shadow: 0 0 26px var(--glow);
       }
-      .device-label {
-        margin-top: 6px;
-        color: var(--ink-2);
-        font-size: 11px;
-        letter-spacing: 0.1em;
+      .topbar-copy {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px 10px;
+        margin-top: 3px;
       }
+      .device-label,
       .clock {
-        margin-top: 4px;
         color: var(--ink-3);
-        font-size: 11px;
-        letter-spacing: 0.06em;
+        font-size: 10px;
+        letter-spacing: 0.08em;
       }
       .topbar-actions {
         display: flex;
@@ -337,9 +342,10 @@
       .connection-status {
         display: inline-flex;
         align-items: center;
-        gap: 7px;
-        min-height: 36px;
-        padding: 0 10px;
+        gap: 6px;
+        min-width: 0;
+        min-height: 30px;
+        padding: 0 8px;
         border: 1px solid var(--line-soft);
         background: var(--surface);
         color: var(--ink-2);
@@ -347,6 +353,10 @@
         letter-spacing: 0.12em;
         text-transform: uppercase;
         white-space: nowrap;
+      }
+      .connection-status span:last-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .status-dot {
         width: 8px;
@@ -381,8 +391,8 @@
       }
       .theme-btn {
         display: grid;
-        width: 44px;
-        height: 44px;
+        width: 34px;
+        height: 34px;
         place-items: center;
         padding: 0;
         border: 1px solid var(--line);
@@ -411,8 +421,8 @@
         display: block;
       }
       .theme-btn .moon-icon {
-        width: 18px;
-        height: 18px;
+        width: 15px;
+        height: 15px;
         overflow: visible;
       }
       .theme-btn .sun {
@@ -428,16 +438,16 @@
       /* Navegação em segmentos, estilo console */
       .tabbar {
         display: flex;
-        gap: 4px;
-        padding: 4px;
-        margin-bottom: var(--space-xl);
+        gap: 3px;
+        padding: 3px;
+        margin-bottom: 10px;
         border: 1px solid var(--line-soft);
         background: var(--surface);
       }
       .tab {
         position: relative;
         flex: 1;
-        padding: 10px 12px;
+        padding: 7px 10px;
         border: 0;
         background: transparent;
         color: var(--ink-3);
@@ -469,9 +479,27 @@
       }
 
       main {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-xl);
+        display: grid;
+        gap: 8px;
+        align-content: start;
+      }
+      @media (min-width: 720px) {
+        main {
+          grid-template-columns: 1fr 1fr;
+          align-items: start;
+        }
+        .overview,
+        .notice {
+          grid-column: 1 / -1;
+        }
+        .panel-resources {
+          grid-column: 1;
+          grid-row: span 2;
+        }
+        .panel-ops,
+        .panel-history {
+          grid-column: 2;
+        }
       }
 
       /* Painel: vidro com os cantos marcados, como leitura de visor */
@@ -510,8 +538,8 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: var(--space-xl);
-        padding: var(--space-xl);
+        gap: var(--space-md);
+        padding: 10px 12px;
         background:
           linear-gradient(180deg, oklch(84% 0.13 215 / 0.09), transparent 55%),
           var(--surface-raised);
@@ -520,9 +548,9 @@
         min-width: 0;
       }
       .overview h2 {
-        margin-top: 10px;
+        margin-top: 4px;
         color: var(--ink);
-        font-size: clamp(26px, 6vw, 40px);
+        font-size: clamp(20px, 4.6vw, 28px);
         font-weight: 700;
         letter-spacing: 0.06em;
         line-height: 1.05;
@@ -530,16 +558,16 @@
         text-shadow: 0 0 30px var(--glow);
       }
       .overview-reason {
-        max-width: 52ch;
-        margin-top: 10px;
+        max-width: 60ch;
+        margin-top: 4px;
         color: var(--ink-2);
-        font-size: 13px;
+        font-size: 11px;
       }
       .overview-meta {
         display: flex;
         flex-wrap: wrap;
-        gap: 4px 8px;
-        margin-top: 12px;
+        gap: 2px 8px;
+        margin-top: 6px;
         color: var(--ink-3);
         font-size: 10px;
         letter-spacing: 0.08em;
@@ -561,8 +589,8 @@
       .reactor {
         position: relative;
         display: grid;
-        width: 96px;
-        height: 96px;
+        width: 64px;
+        height: 64px;
         flex: 0 0 auto;
         place-items: center;
       }
@@ -585,14 +613,14 @@
       .reactor::after {
         content: "";
         position: absolute;
-        inset: 13px;
+        inset: 9px;
         border: 1px dashed var(--line);
         border-radius: 50%;
         animation: spin 22s linear infinite reverse;
       }
       .reactor-core {
-        width: 38px;
-        height: 38px;
+        width: 26px;
+        height: 26px;
         border-radius: 50%;
         background: radial-gradient(
           circle,
@@ -642,14 +670,14 @@
 
       .notice {
         display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        padding: 12px 16px;
+        align-items: baseline;
+        gap: 8px;
+        padding: 8px 12px;
         border: 1px solid var(--line);
         border-left-width: 3px;
         background: var(--surface);
         color: var(--ink-2);
-        font-size: 13px;
+        font-size: 11px;
       }
       .notice[data-state="warn"] {
         border-color: oklch(86% 0.15 85 / 0.5);
@@ -661,7 +689,7 @@
         background: oklch(70% 0.2 27 / 0.09);
       }
       .notice strong {
-        display: block;
+        margin-right: 6px;
         color: var(--ink);
         font-weight: 700;
         letter-spacing: 0.06em;
@@ -672,45 +700,54 @@
       }
 
       .section {
-        padding: var(--space-lg) var(--space-lg) var(--space-xl);
+        padding: 8px 10px 10px;
       }
-      .section-header {
+      .panel-head {
         display: flex;
-        align-items: flex-end;
+        align-items: center;
         justify-content: space-between;
-        gap: var(--space-md);
-        padding: var(--space-lg) 0 var(--space-md);
+        gap: 10px;
+        padding-bottom: 6px;
+        margin-bottom: 6px;
         border-bottom: 1px solid var(--line-soft);
-        margin-bottom: var(--space-md);
       }
-      .section > .section-header:first-child {
-        padding-top: 0;
+      .panel-head + .panel-head {
+        margin-top: 10px;
       }
-      .section-header h2,
-      .section-header h3 {
-        margin-top: 6px;
-        font-size: 17px;
+      .panel-head-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .panel-head h2,
+      .panel-head h3 {
+        color: var(--accent);
+        font-size: 11px;
         font-weight: 700;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.22em;
         text-transform: uppercase;
       }
       .section-description,
-      .section-count {
+      .section-count,
+      .panel-note {
         color: var(--ink-3);
-        font-size: 10px;
+        font-size: 9px;
         letter-spacing: 0.14em;
         text-transform: uppercase;
         white-space: nowrap;
       }
       .section-count {
-        padding: 3px 8px;
+        padding: 2px 7px;
         border: 1px solid var(--line-soft);
         color: var(--accent);
       }
       .operation-help {
-        margin-bottom: var(--space-md);
+        overflow: hidden;
+        margin-bottom: 8px;
         color: var(--ink-3);
-        font-size: 12px;
+        font-size: 10px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       /* Linhas de recurso, com barra segmentada de HUD */
@@ -725,35 +762,36 @@
       }
       .resource-row {
         display: grid;
-        grid-template-columns: minmax(120px, 1fr) minmax(90px, 1.4fr) auto;
+        grid-template-columns: minmax(0, 1.1fr) minmax(60px, 1fr) 48px;
         align-items: center;
-        gap: var(--space-md);
-        padding: 12px 14px;
+        gap: 10px;
+        padding: 5px 10px;
         background: var(--surface-soft);
       }
       .resource-copy {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
         min-width: 0;
       }
       .resource-name {
-        display: block;
         color: var(--ink);
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 700;
         letter-spacing: 0.14em;
         text-transform: uppercase;
       }
       .resource-meta {
-        display: block;
-        margin-top: 3px;
+        min-width: 0;
         overflow: hidden;
         color: var(--ink-3);
-        font-size: 11px;
+        font-size: 10px;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
       .progress {
         position: relative;
-        height: 10px;
+        height: 8px;
         overflow: hidden;
         border: 1px solid var(--line-soft);
         background: repeating-linear-gradient(
@@ -799,9 +837,9 @@
         box-shadow: 0 0 12px oklch(70% 0.2 27 / 0.5);
       }
       .resource-value {
-        min-width: 62px;
+        min-width: 44px;
         color: var(--ink);
-        font-size: 17px;
+        font-size: 13px;
         font-weight: 700;
         letter-spacing: 0.04em;
         text-align: right;
@@ -809,7 +847,7 @@
       .resource-value small {
         display: block;
         color: var(--ink-3);
-        font-size: 10px;
+        font-size: 8px;
         font-weight: 400;
         letter-spacing: 0.12em;
         text-transform: uppercase;
@@ -817,36 +855,42 @@
 
       .metric-strip {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
         gap: 1px;
-        margin-top: var(--space-md);
+        margin-top: 8px;
         border: 1px solid var(--line-soft);
         background: var(--line-soft);
       }
       .metric {
         display: flex;
         flex-direction: column;
-        gap: 3px;
-        padding: 12px 14px;
+        gap: 1px;
+        padding: 5px 10px;
         background: var(--surface-soft);
       }
       .metric-label {
         color: var(--ink-3);
-        font-size: 9px;
+        font-size: 8px;
         font-weight: 700;
-        letter-spacing: 0.2em;
+        letter-spacing: 0.18em;
         text-transform: uppercase;
       }
       .metric-value {
+        overflow: hidden;
         color: var(--ink);
-        font-size: 18px;
+        font-size: 13px;
         font-weight: 700;
-        letter-spacing: 0.02em;
+        letter-spacing: 0;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       .metric-meta {
+        overflow: hidden;
         color: var(--ink-3);
-        font-size: 10px;
+        font-size: 8px;
         letter-spacing: 0.06em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .two-column {
@@ -857,10 +901,10 @@
       /* Itens de operação */
       .ops-item {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-between;
-        gap: var(--space-md);
-        padding: 12px 14px;
+        gap: 10px;
+        padding: 5px 10px;
         background: var(--surface-soft);
       }
       .ops-main {
@@ -872,9 +916,10 @@
         gap: 8px;
       }
       .ops-title h3 {
+        min-width: 0;
         overflow: hidden;
         color: var(--ink);
-        font-size: 12px;
+        font-size: 10px;
         font-weight: 700;
         letter-spacing: 0.12em;
         text-overflow: ellipsis;
@@ -902,17 +947,20 @@
         box-shadow: 0 0 10px var(--err);
       }
       .ops-detail {
-        margin-top: 4px;
+        overflow: hidden;
+        margin-top: 2px;
         color: var(--ink-2);
-        font-size: 12px;
+        font-size: 10px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
       .item-meta {
         display: flex;
         flex-wrap: wrap;
-        gap: 3px 10px;
-        margin-top: 5px;
+        gap: 2px 8px;
+        margin-top: 2px;
         color: var(--ink-3);
-        font-size: 10px;
+        font-size: 9px;
         letter-spacing: 0.08em;
         text-transform: uppercase;
       }
@@ -924,10 +972,10 @@
       }
       .state-badge {
         flex: 0 0 auto;
-        padding: 3px 8px;
+        padding: 2px 6px;
         border: 1px solid var(--line-soft);
         color: var(--ink-3);
-        font-size: 9px;
+        font-size: 8px;
         font-weight: 700;
         letter-spacing: 0.16em;
         text-transform: uppercase;
@@ -947,22 +995,24 @@
         color: var(--err);
       }
       .empty-item {
-        padding: 16px 14px;
+        grid-column: 1 / -1;
+        padding: 10px;
         background: var(--surface-soft);
         color: var(--ink-3);
-        font-size: 12px;
+        font-size: 10px;
         text-align: center;
       }
 
       /* Gráficos */
       .chart-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: var(--space-md);
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
       }
       .chart {
+        min-width: 0;
         margin: 0;
-        padding: var(--space-md);
+        padding: 6px 8px;
         border: 1px solid var(--line-soft);
         background: var(--surface-soft);
       }
@@ -974,14 +1024,14 @@
       }
       .chart h3 {
         color: var(--ink-3);
-        font-size: 10px;
+        font-size: 9px;
         font-weight: 700;
         letter-spacing: 0.2em;
         text-transform: uppercase;
       }
       .chart-value {
         color: var(--ink);
-        font-size: 16px;
+        font-size: 12px;
         font-weight: 700;
       }
       .chart-value small {
@@ -994,8 +1044,8 @@
       .chart canvas {
         display: block;
         width: 100%;
-        height: 76px;
-        margin: 10px 0 6px;
+        height: 30px;
+        margin: 4px 0 3px;
       }
       .chart-footer {
         display: flex;
@@ -1006,60 +1056,281 @@
         text-transform: uppercase;
       }
       .chart-insight {
-        margin-top: 8px;
-        padding-top: 8px;
-        border-top: 1px solid var(--line-soft);
-        color: var(--ink-2);
-        font-size: 11px;
+        overflow: hidden;
+        color: var(--ink-3);
+        font-size: 9px;
+        letter-spacing: 0.04em;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
-      /* Cofre de arquivos */
-      .dropzone {
-        position: relative;
-        display: grid;
-        width: 100%;
-        justify-items: center;
+      /* Cofre de arquivos: navegação por pastas, no espírito do Explorer */
+      .explorer-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
         gap: 6px;
-        padding: var(--space-xl) var(--space-lg);
+        margin-bottom: 8px;
+      }
+      .crumbs {
+        display: flex;
+        flex: 1 1 90px;
+        align-items: center;
+        gap: 3px;
+        min-width: 0;
+        overflow: hidden;
+        padding: 0 8px;
+        height: 28px;
+        border: 1px solid var(--line-soft);
+        background: var(--surface-soft);
+        white-space: nowrap;
+      }
+      .crumb {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--ink-2);
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      .crumb:hover {
+        color: var(--accent-strong);
+      }
+      .crumb[aria-current="true"] {
+        color: var(--accent);
+        cursor: default;
+      }
+      .crumb-sep {
+        color: var(--ink-3);
+        font-size: 10px;
+      }
+      .explorer-actions {
+        display: flex;
+        flex: 0 0 auto;
+        gap: 4px;
+      }
+
+      /* Enviar arquivo ocupa uma tira fina no canto, não meio painel. */
+      .dropchip {
+        display: inline-flex;
+        flex: 1 1 150px;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+        height: 28px;
+        padding: 0 10px;
         border: 1px dashed var(--line);
-        background: linear-gradient(
-          180deg,
-          oklch(84% 0.13 215 / 0.05),
-          transparent
-        );
-        text-align: center;
+        background: none;
+        color: var(--ink-3);
+        font: inherit;
+        font-size: 9px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
         cursor: pointer;
         transition:
           border-color 0.15s ease,
           background 0.15s ease,
-          box-shadow 0.15s ease;
+          color 0.15s ease;
       }
-      .dropzone:hover,
-      .dropzone[data-drag="true"] {
+      .dropchip span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .dropchip svg {
+        width: 13px;
+        height: 13px;
+        flex: 0 0 auto;
+        color: var(--accent);
+      }
+      .dropchip:hover,
+      .dropchip:focus-visible,
+      .dropchip[data-drag="true"] {
         border-color: var(--accent);
         background: oklch(84% 0.13 215 / 0.1);
+        color: var(--ink-2);
+        outline: none;
+      }
+      .icon-btn {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        flex: 0 0 auto;
+        place-items: center;
+        padding: 0;
+        border: 1px solid var(--line-soft);
+        background: var(--surface-soft);
+        color: var(--accent);
+        font-size: 12px;
+        line-height: 1;
+        cursor: pointer;
+        transition:
+          background 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+      .icon-btn:hover:not(:disabled) {
+        background: oklch(84% 0.13 215 / 0.16);
+        box-shadow: 0 0 14px var(--glow);
+      }
+      .icon-btn:disabled {
+        color: var(--ink-3);
+        cursor: default;
+        opacity: 0.5;
+      }
+      .icon-btn:focus-visible,
+      .crumb:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .explorer {
+        position: relative;
+        padding: 6px;
+        border: 1px solid var(--line-soft);
+        background: var(--surface-soft);
+        transition:
+          border-color 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+      /* Soltar vale no painel inteiro, não só no chip. */
+      .explorer[data-drag="true"] {
+        border-color: var(--accent);
+        border-style: dashed;
         box-shadow: inset 0 0 40px var(--glow);
       }
-      .dropzone strong {
-        color: var(--ink);
-        font-size: 12px;
+
+      /* Grade de ícones */
+      .file-grid[data-view="grid"] {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+        gap: 6px;
+      }
+      .file-grid[data-view="list"] {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+
+      .tile {
+        position: relative;
+        display: grid;
+        justify-items: center;
+        gap: 3px;
+        padding: 8px 6px;
+        border: 1px solid transparent;
+        background: none;
+        color: inherit;
+        font: inherit;
+        text-align: center;
+        cursor: pointer;
+      }
+      .tile:hover,
+      .tile:focus-visible {
+        border-color: var(--line);
+        background: oklch(84% 0.13 215 / 0.1);
+        outline: none;
+      }
+      .tile-art {
+        display: grid;
+        width: 48px;
+        height: 48px;
+        place-items: center;
+        overflow: hidden;
+        border: 1px solid var(--line-soft);
+        background: var(--bg-deep);
+        color: var(--accent);
+      }
+      .tile-art img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .tile-art svg {
+        width: 24px;
+        height: 24px;
+      }
+      .tile-ext {
+        font-size: 9px;
         font-weight: 700;
-        letter-spacing: 0.18em;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
       }
-      .dropzone span {
+      .tile[data-kind="folder"] .tile-art {
+        border-color: oklch(86% 0.13 88 / 0.4);
+        color: var(--gold);
+      }
+      .tile-name {
+        overflow: hidden;
+        width: 100%;
+        color: var(--ink);
+        font-size: 10px;
+        line-height: 1.25;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .tile-meta {
+        overflow: hidden;
+        width: 100%;
         color: var(--ink-3);
+        font-size: 8px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .tile-drop {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        display: grid;
+        width: 18px;
+        height: 18px;
+        place-items: center;
+        padding: 0;
+        border: 1px solid var(--line-soft);
+        background: var(--bg-deep);
+        color: var(--err);
+        font-size: 11px;
+        line-height: 1;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+      }
+      .tile:hover .tile-drop,
+      .tile-drop:focus-visible {
+        opacity: 1;
+      }
+
+      /* Modo lista: mesma informação, uma linha por item */
+      .file-grid[data-view="list"] .tile {
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+        align-items: center;
+        justify-items: start;
+        gap: 10px;
+        padding: 5px 8px;
+        text-align: left;
+        background: var(--surface-soft);
+      }
+      .file-grid[data-view="list"] .tile-art {
+        width: 28px;
+        height: 28px;
+      }
+      .file-grid[data-view="list"] .tile-art svg {
+        width: 15px;
+        height: 15px;
+      }
+      .file-grid[data-view="list"] .tile-name {
         font-size: 11px;
       }
-      .dropzone-icon {
-        width: 34px;
-        height: 34px;
-        margin-bottom: 4px;
-        color: var(--accent);
-        filter: drop-shadow(0 0 10px var(--glow));
+      .file-grid[data-view="list"] .tile-drop {
+        position: static;
+        opacity: 1;
       }
+
       .hud-btn {
-        padding: 8px 16px;
+        padding: 6px 12px;
         border: 1px solid var(--line);
         background: var(--surface-raised);
         color: var(--accent);
@@ -1068,6 +1339,7 @@
         letter-spacing: 0.18em;
         text-transform: uppercase;
         text-decoration: none;
+        white-space: nowrap;
         cursor: pointer;
         transition:
           background 0.15s ease,
@@ -1094,17 +1366,17 @@
       .upload-list {
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        margin-top: var(--space-md);
+        gap: 4px;
+        margin-bottom: 8px;
       }
       .upload-item {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
-        gap: 6px 10px;
-        padding: 10px 12px;
+        gap: 4px 10px;
+        padding: 6px 10px;
         border: 1px solid var(--line-soft);
-        background: var(--surface-soft);
-        font-size: 11px;
+        background: var(--surface);
+        font-size: 10px;
       }
       .upload-item[data-state="done"] {
         border-color: oklch(85% 0.14 178 / 0.4);
@@ -1133,72 +1405,150 @@
         height: 4px;
       }
 
-      .file-row {
+      /* Popup do painel: pergunta, confirma e avisa sem caixa do navegador */
+      .modal {
+        position: fixed;
+        inset: 0;
+        z-index: 160;
         display: grid;
-        grid-template-columns: 44px minmax(0, 1fr) auto;
-        align-items: center;
-        gap: var(--space-md);
-        padding: 10px 12px;
-        background: var(--surface-soft);
-      }
-      .file-thumb {
-        display: grid;
-        width: 44px;
-        height: 44px;
         place-items: center;
-        overflow: hidden;
-        border: 1px solid var(--line-soft);
-        background: var(--bg-deep);
-        color: var(--accent);
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
+        padding: 16px;
+        background: oklch(8% 0.025 255 / 0.82);
+        backdrop-filter: blur(4px);
       }
-      .file-thumb img {
+      .modal-card {
+        width: min(360px, 100%);
+        border: 1px solid var(--line);
+        background: var(--bg);
+      }
+      .modal-body {
+        padding: 12px 10px;
+        border-bottom: 1px solid var(--line-soft);
+        color: var(--ink-2);
+        font-size: 11px;
+        line-height: 1.5;
+      }
+      .modal-input {
         width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-      .file-name {
-        display: block;
-        overflow: hidden;
+        margin-top: 10px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        background: var(--bg-deep);
         color: var(--ink);
         font-size: 12px;
-        text-decoration: none;
+      }
+      .modal-input:focus {
+        border-color: var(--accent);
+        outline: none;
+        box-shadow: 0 0 14px var(--glow);
+      }
+
+      /* Aviso curto: aparece, informa e some sozinho */
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 20px;
+        z-index: 170;
+        max-width: min(320px, 86vw);
+        padding: 8px 14px;
+        border: 1px solid var(--accent);
+        background: var(--bg);
+        color: var(--ink);
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        text-align: center;
+        text-transform: uppercase;
+        transform: translateX(-50%);
+        box-shadow: 0 0 24px var(--glow);
+      }
+
+      /* Prévia em sobreposição */
+      .preview {
+        position: fixed;
+        inset: 0;
+        z-index: 150;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+        background: oklch(8% 0.025 255 / 0.82);
+        backdrop-filter: blur(4px);
+      }
+      .preview-card {
+        position: relative;
+        display: flex;
+        width: min(760px, 100%);
+        max-height: 88vh;
+        flex-direction: column;
+        border: 1px solid var(--line);
+        background: var(--bg);
+      }
+      .preview-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--line-soft);
+      }
+      .preview-title {
+        overflow: hidden;
+        color: var(--ink);
+        font-size: 11px;
+        letter-spacing: 0.08em;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-      .file-name:hover {
-        color: var(--accent-strong);
-        text-decoration: underline;
+      .preview-body {
+        display: grid;
+        flex: 1 1 auto;
+        min-height: 140px;
+        place-items: center;
+        overflow: auto;
+        padding: 10px;
+        background: var(--bg-deep);
       }
-      .file-meta {
-        display: block;
-        margin-top: 3px;
+      .preview-body img,
+      .preview-body video {
+        max-width: 100%;
+        max-height: 60vh;
+      }
+      .preview-body iframe {
+        width: 100%;
+        height: 60vh;
+        border: 0;
+        background: var(--bg);
+      }
+      .preview-body pre {
+        width: 100%;
+        max-height: 60vh;
+        margin: 0;
+        overflow: auto;
+        color: var(--ink-2);
+        font-size: 11px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .preview-empty {
         color: var(--ink-3);
         font-size: 10px;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
       }
-      .file-actions {
+      .preview-actions {
         display: flex;
         flex-wrap: wrap;
-        justify-content: flex-end;
         gap: 4px;
-      }
-      .file-actions .hud-btn {
-        padding: 6px 9px;
-        font-size: 9px;
-        letter-spacing: 0.12em;
+        padding: 8px 10px;
+        border-top: 1px solid var(--line-soft);
       }
 
       .foot {
         display: flex;
         flex-wrap: wrap;
-        gap: 4px 10px;
-        margin-top: var(--space-2xl);
-        padding-top: var(--space-md);
+        gap: 2px 8px;
+        margin-top: 8px;
+        padding-top: 6px;
         border-top: 1px solid var(--line-soft);
         color: var(--ink-3);
         font-size: 10px;
@@ -1211,61 +1561,47 @@
         animation: blink 1.4s steps(1) infinite;
       }
 
-      @media (max-width: 680px) {
-        .resource-row {
-          grid-template-columns: minmax(0, 1fr) auto;
+      /* Numa tela de celular o painel tem que caber sem rolagem: o detalhe
+         de apoio some e sobra o número que importa. */
+      @media (max-width: 719px) {
+        .eyebrow {
+          display: none;
         }
-        .resource-row .progress {
-          grid-column: 1 / -1;
-          order: 3;
+        .metric-strip {
+          grid-template-columns: repeat(4, 1fr);
         }
-        .overview {
-          flex-direction: column-reverse;
-          align-items: stretch;
-          gap: var(--space-lg);
+        .metric-meta,
+        .item-meta,
+        .operation-help {
+          display: none;
         }
-        .overview-side {
-          justify-items: start;
+        .metric-value {
+          font-size: 12px;
         }
       }
 
       @media (max-width: 480px) {
         body {
-          font-size: 15px;
+          font-size: 14px;
         }
-        .section {
-          padding: var(--space-md) var(--space-md) var(--space-lg);
+        .resource-row {
+          grid-template-columns: minmax(0, 1fr) 44px;
         }
-        .overview {
-          padding: var(--space-lg);
-        }
-        .topbar {
-          flex-direction: column;
-          gap: var(--space-md);
-        }
-        .topbar-actions {
-          width: 100%;
-          justify-content: space-between;
+        .resource-row .progress {
+          display: none;
         }
         .tab {
-          padding: 9px 6px;
-          font-size: 10px;
-          letter-spacing: 0.1em;
+          padding: 7px 4px;
+          font-size: 9px;
+          letter-spacing: 0.08em;
         }
-        .ops-item {
-          flex-direction: column;
-          align-items: flex-start;
+        .reactor {
+          width: 52px;
+          height: 52px;
         }
-        .file-row {
-          grid-template-columns: 36px minmax(0, 1fr);
-        }
-        .file-thumb {
-          width: 36px;
-          height: 36px;
-        }
-        .file-actions {
-          grid-column: 1 / -1;
-          justify-content: flex-start;
+        .reactor-core {
+          width: 20px;
+          height: 20px;
         }
       }
 
@@ -1293,11 +1629,13 @@
     <a class="skip-link" href="#tab-sistema">Ir para o status</a>
     <div class="app-shell">
       <header class="topbar">
-        <div>
+        <div class="topbar-main">
           <div class="eyebrow">J.A.R.V.I.S. · server box</div>
           <h1>Central de comando</h1>
-          <div class="device-label" id="deviceLabel">Android · pocket VPS</div>
-          <div class="clock" id="clock">—</div>
+          <div class="topbar-copy">
+            <span class="device-label" id="deviceLabel">Android · pocket VPS</span>
+            <span class="clock" id="clock">—</span>
+          </div>
         </div>
         <div class="topbar-actions">
           <div
@@ -1391,7 +1729,6 @@
             <div class="reactor" aria-hidden="true">
               <span class="reactor-core"></span>
             </div>
-            <small>núcleo</small>
           </div>
         </section>
 
@@ -1409,13 +1746,13 @@
           </div>
         </div>
 
-        <section class="surface section" aria-labelledby="resourcesTitle">
-          <div class="section-header">
-            <div>
-              <div class="section-kicker">Uso do host</div>
-              <h2 id="resourcesTitle">Recursos</h2>
-            </div>
-            <div class="section-description">agora</div>
+        <section
+          class="surface section panel-resources"
+          aria-labelledby="resourcesTitle"
+        >
+          <div class="panel-head">
+            <h2 id="resourcesTitle">Recursos</h2>
+            <span class="panel-note">agora</span>
           </div>
           <div class="resource-list">
             <article class="resource-row" id="resourceRam" data-state="unknown">
@@ -1489,7 +1826,7 @@
             <div class="metric">
               <span class="metric-label">Carga</span
               ><strong class="metric-value" id="loadValue">—</strong
-              ><small class="metric-meta" id="loadMeta">1m · 5m · 15m</small>
+              ><small class="metric-meta" id="loadMeta">média de 1 min</small>
             </div>
             <div class="metric">
               <span class="metric-label">Uptime</span
@@ -1512,32 +1849,28 @@
         </section>
 
         <section
-          class="surface section operation-section"
+          class="surface section panel-ops"
           aria-labelledby="operationTitle"
         >
-          <div class="section-header">
-            <div>
-              <div class="section-kicker">Rotina e processos</div>
-              <h2 id="operationTitle">Operação</h2>
-            </div>
-            <div class="section-count" id="operationCount">—</div>
+          <div class="panel-head">
+            <h2 id="operationTitle">Operação</h2>
+            <span class="section-count" id="operationCount">—</span>
           </div>
           <p class="operation-help" id="operationHelp">
-            O painel já está online. Quando você criar um cron, a rotina
-            aparecerá aqui.
+            Crons são opcionais; quando criar uma rotina, ela aparece aqui.
           </p>
           <div class="ops-list" id="operationList">
             <div class="empty-item">Aguardando leitura da operação.</div>
           </div>
         </section>
 
-        <section class="surface section" aria-labelledby="historyTitle">
-          <div class="section-header">
-            <div>
-              <div class="section-kicker">Janela curta</div>
-              <h2 id="historyTitle">Histórico</h2>
-            </div>
-            <div class="section-description">últimos 90 segundos</div>
+        <section
+          class="surface section panel-history"
+          aria-labelledby="historyTitle"
+        >
+          <div class="panel-head">
+            <h2 id="historyTitle">Histórico</h2>
+            <span class="panel-note">90s</span>
           </div>
           <div class="chart-grid">
             <figure class="chart">
@@ -1546,10 +1879,9 @@
                 <div class="chart-value" id="batteryNow">—</div>
               </div>
               <canvas id="batteryChart" aria-hidden="true"></canvas>
-              <figcaption class="chart-footer">
-                <span>90s atrás</span><span>agora</span>
+              <figcaption class="chart-insight" id="batteryInsight">
+                sem histórico
               </figcaption>
-              <div class="chart-insight" id="batteryInsight">sem histórico</div>
             </figure>
             <figure class="chart">
               <div class="chart-header">
@@ -1557,10 +1889,9 @@
                 <div class="chart-value" id="ramNow">—</div>
               </div>
               <canvas id="ramChart" aria-hidden="true"></canvas>
-              <figcaption class="chart-footer">
-                <span>90s atrás</span><span>agora</span>
+              <figcaption class="chart-insight" id="ramInsight">
+                sem histórico
               </figcaption>
-              <div class="chart-insight" id="ramInsight">sem histórico</div>
             </figure>
           </div>
         </section>
@@ -1572,12 +1903,9 @@
         hidden
         aria-labelledby="digestTitle"
       >
-        <div class="section-header">
-          <div>
-            <div class="section-kicker">Newsdigest</div>
-            <h2 id="digestTitle">Digest</h2>
-          </div>
-          <div class="section-description" id="digestMeta">sem leitura</div>
+        <div class="panel-head">
+          <h2 id="digestTitle">Digest</h2>
+          <span class="section-description" id="digestMeta">sem leitura</span>
         </div>
 
         <div
@@ -1604,34 +1932,25 @@
           </div>
         </div>
 
-        <div class="section-header">
-          <div>
-            <div class="section-kicker">Saúde por fonte</div>
-            <h3>Fontes</h3>
-          </div>
-          <div class="section-count" id="digestSourceCount">—</div>
+        <div class="panel-head">
+          <h3>Fontes</h3>
+          <span class="section-count" id="digestSourceCount">—</span>
         </div>
         <div class="resource-list" id="digestSources">
           <div class="empty-item">Aguardando leitura do digest.</div>
         </div>
 
-        <div class="section-header">
-          <div>
-            <div class="section-kicker">Envios e curadoria</div>
-            <h3>Últimos 7 dias</h3>
-          </div>
-          <div class="section-description">por rodada</div>
+        <div class="panel-head">
+          <h3>Últimos 7 dias</h3>
+          <span class="panel-note">por rodada</span>
         </div>
         <div class="resource-list" id="digestDays">
           <div class="empty-item">Aguardando leitura do digest.</div>
         </div>
 
-        <div class="section-header">
-          <div>
-            <div class="section-kicker">Registro</div>
-            <h3>Últimas rodadas</h3>
-          </div>
-          <div class="section-description">digest.log</div>
+        <div class="panel-head">
+          <h3>Últimas rodadas</h3>
+          <span class="panel-note">digest.log</span>
         </div>
         <div class="ops-list" id="digestRuns">
           <div class="empty-item">Aguardando leitura do digest.</div>
@@ -1639,51 +1958,147 @@
       </section>
 
       <section
-        class="surface section"
+        class="surface section panel-files"
         id="tab-arquivos"
         hidden
         aria-labelledby="filesTitle"
       >
-        <div class="section-header">
-          <div>
-            <div class="section-kicker">Cofre do aparelho</div>
-            <h2 id="filesTitle">Arquivos</h2>
+        <div class="panel-head">
+          <h2 id="filesTitle">Arquivos</h2>
+          <div class="panel-head-meta">
+            <span class="section-description" id="filesMeta">sem leitura</span>
+            <span class="section-count" id="filesCount">—</span>
           </div>
-          <div class="section-description" id="filesMeta">sem leitura</div>
         </div>
 
-        <button class="dropzone" type="button" id="dropzone">
-          <svg
-            class="dropzone-icon"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.4"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+        <div class="explorer-bar">
+          <button
+            class="icon-btn"
+            type="button"
+            id="filesUp"
+            title="Voltar uma pasta"
+            aria-label="Voltar uma pasta"
           >
-            <path d="M12 15.5V3.5m0 0L7.8 7.7M12 3.5l4.2 4.2" />
-            <path d="M3.5 14.5v4A2 2 0 0 0 5.5 20.5h13a2 2 0 0 0 2-2v-4" />
-          </svg>
-          <strong>Enviar arquivo</strong>
-          <span id="dropHint">Arraste aqui ou toque para escolher</span>
-        </button>
+            ↑
+          </button>
+          <nav class="crumbs" id="filesCrumbs" aria-label="Caminho da pasta"></nav>
+          <button
+            class="dropchip"
+            type="button"
+            id="dropchip"
+            title="Enviar arquivos para esta pasta"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 15.5V3.5m0 0L7.8 7.7M12 3.5l4.2 4.2" />
+              <path d="M3.5 14.5v4A2 2 0 0 0 5.5 20.5h13a2 2 0 0 0 2-2v-4" />
+            </svg>
+            <span id="dropHint">Arraste aqui ou toque para escolher</span>
+          </button>
+          <div class="explorer-actions">
+            <button class="hud-btn" type="button" id="newFolderBtn">
+              Nova pasta
+            </button>
+            <button
+              class="icon-btn"
+              type="button"
+              id="viewBtn"
+              title="Alternar grade e lista"
+              aria-label="Alternar entre grade e lista"
+            >
+              ▤
+            </button>
+          </div>
+        </div>
+
         <input type="file" id="fileInput" multiple hidden />
 
-        <div class="upload-list" id="uploadList" hidden></div>
-
-        <div class="section-header">
-          <div>
-            <div class="section-kicker">Guardados no aparelho</div>
-            <h3>Disponíveis</h3>
+        <div class="explorer" id="dropzone">
+          <div class="upload-list" id="uploadList" hidden></div>
+          <div class="file-grid" id="fileList" data-view="grid">
+            <div class="empty-item">Aguardando leitura do cofre.</div>
           </div>
-          <div class="section-count" id="filesCount">—</div>
-        </div>
-        <div class="file-list" id="fileList">
-          <div class="empty-item">Aguardando leitura do cofre.</div>
         </div>
       </section>
+
+      <div class="modal" id="modal" hidden>
+        <div
+          class="modal-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modalTitle"
+        >
+          <div class="preview-head">
+            <strong class="preview-title" id="modalTitle">aviso</strong>
+            <button
+              class="icon-btn"
+              type="button"
+              id="modalClose"
+              aria-label="Fechar"
+            >
+              ✕
+            </button>
+          </div>
+          <div class="modal-body">
+            <p id="modalText"></p>
+            <input class="modal-input" id="modalInput" hidden />
+          </div>
+          <div class="preview-actions">
+            <button class="hud-btn" type="button" id="modalOk">Confirmar</button>
+            <button class="hud-btn" type="button" id="modalCancel">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
+
+      <div class="preview" id="preview" hidden>
+        <div
+          class="preview-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="previewName"
+        >
+          <div class="preview-head">
+            <strong class="preview-title" id="previewName">arquivo</strong>
+            <button
+              class="icon-btn"
+              type="button"
+              id="previewClose"
+              aria-label="Fechar prévia"
+            >
+              ✕
+            </button>
+          </div>
+          <div class="preview-body" id="previewBody"></div>
+          <div class="preview-actions">
+            <a class="hud-btn" id="previewOpen" target="_blank" rel="noopener"
+              >Abrir</a
+            >
+            <a class="hud-btn" id="previewDownload">Baixar</a>
+            <button class="hud-btn" type="button" id="previewLink">
+              Copiar link
+            </button>
+            <button
+              class="hud-btn"
+              data-tone="danger"
+              type="button"
+              id="previewDelete"
+            >
+              Apagar
+            </button>
+          </div>
+        </div>
+      </div>
 
       <footer class="foot">
         <span>jarvis-server-box</span>
@@ -2025,14 +2440,13 @@
           }
 
           $("loadValue").textContent = host.load
-            ? host.load
-                .map(function (value) {
-                  return Number(value).toFixed(2);
-                })
-                .join(" · ")
+            ? Number(host.load[0]).toFixed(2)
             : "—";
           $("loadMeta").textContent = host.load
-            ? "1m · 5m · 15m"
+            ? "5m " +
+              Number(host.load[1]).toFixed(2) +
+              " · 15m " +
+              Number(host.load[2]).toFixed(2)
             : "sem leitura";
           $("uptimeValue").textContent = fmtUptime(host.uptime);
           $("temperatureValue").textContent =
@@ -2242,8 +2656,8 @@
 
           var hasRoutines = hasDigest || routineJobs.length > 0;
           $("operationHelp").textContent = hasRoutines
-            ? "O server-box fica online sozinho. Cada cron configurado aparece aqui com o próximo horário."
-            : "O painel já está online. Crons são opcionais; quando você criar uma rotina automática, ela aparecerá aqui.";
+            ? "Cada cron aparece aqui com o próximo horário."
+            : "Crons são opcionais; quando criar uma rotina, ela aparece aqui.";
           if (!hasRoutines) {
             items.push({
               name: "Rotinas",
@@ -2639,17 +3053,25 @@
         tickDigest();
         setInterval(tickDigest, 60000);
 
-        // ---- Cofre de arquivos -------------------------------------------
-        // Upload manda o arquivo cru no corpo do POST: sem multipart, sem
+        // ---- Cofre de arquivos: pastas, prévia e envio ---------------------
+        // Uma pasta de verdade no aparelho, navegável como no Explorer. O
+        // upload manda o arquivo cru no corpo do POST: sem multipart, sem
         // biblioteca, e o XHR ainda entrega o progresso do envio.
         var dropzone = $("dropzone");
+        var dropchip = $("dropchip");
         var fileInput = $("fileInput");
         var uploadList = $("uploadList");
+        var fileList = $("fileList");
+        var preview = $("preview");
         var maxUpload = 0;
+        var here = "";
 
-        function fileHref(name, download) {
+        function joinPath(base, name) {
+          return base ? base + "/" + name : name;
+        }
+        function fileHref(path, download) {
           return (
-            "/files/" + encodeURIComponent(name) + (download ? "?download" : "")
+            "/files/" + encodeURIComponent(path) + (download ? "?download" : "")
           );
         }
         function fileExt(name) {
@@ -2659,127 +3081,369 @@
         function since(ms) {
           return isFinite(ms) ? relative(new Date(ms).toISOString()) : "—";
         }
+        function folderIcon() {
+          var ns = "http://www.w3.org/2000/svg";
+          var svg = document.createElementNS(ns, "svg");
+          svg.setAttribute("viewBox", "0 0 24 24");
+          svg.setAttribute("fill", "none");
+          svg.setAttribute("stroke", "currentColor");
+          svg.setAttribute("stroke-width", "1.4");
+          svg.setAttribute("stroke-linejoin", "round");
+          svg.setAttribute("aria-hidden", "true");
+          var path = document.createElementNS(ns, "path");
+          path.setAttribute(
+            "d",
+            "M3.5 6.8A1.3 1.3 0 0 1 4.8 5.5h3.9l2 2.4h8.5a1.3 1.3 0 0 1 1.3 1.3v8.5a1.3 1.3 0 0 1-1.3 1.3H4.8a1.3 1.3 0 0 1-1.3-1.3Z",
+          );
+          svg.appendChild(path);
+          return svg;
+        }
 
-        function copyLink(name, button) {
-          var url = window.location.origin + fileHref(name);
-          var restore = function () {
-            var label = button.dataset.label;
-            button.textContent = "copiado";
-            setTimeout(function () {
-              button.textContent = label;
-            }, 1500);
+        // Caixa do navegador quebra o clima do painel: pergunta, confirmação
+        // e aviso são do próprio HUD.
+        var modal = $("modal");
+        var modalDone = null;
+
+        function closeModal(answer) {
+          if (!modal || modal.hidden) return;
+          modal.hidden = true;
+          var done = modalDone;
+          modalDone = null;
+          if (done) done(answer);
+        }
+
+        function ask(opts) {
+          return new Promise(function (resolve) {
+            closeModal(null);
+            modalDone = resolve;
+            $("modalTitle").textContent = opts.title || "Confirmar";
+            $("modalText").textContent = opts.text || "";
+            var field = $("modalInput");
+            var wantsInput = opts.input === true;
+            field.hidden = !wantsInput;
+            field.value = opts.value || "";
+            field.placeholder = opts.placeholder || "";
+            field.readOnly = Boolean(opts.readOnly);
+            var ok = $("modalOk");
+            ok.textContent = opts.confirmLabel || "Confirmar";
+            if (opts.tone) ok.dataset.tone = opts.tone;
+            else delete ok.dataset.tone;
+            $("modalCancel").hidden = Boolean(opts.onlyOk);
+            modal.hidden = false;
+            if (wantsInput) {
+              field.focus();
+              field.select();
+            } else {
+              ok.focus();
+            }
+          });
+        }
+
+        function confirmar(text, opts) {
+          return ask({
+            title: (opts && opts.title) || "Confirmar",
+            text: text,
+            confirmLabel: (opts && opts.confirmLabel) || "Confirmar",
+            tone: opts && opts.tone,
+          }).then(function (answer) {
+            return answer === true;
+          });
+        }
+
+        var toastTimer = null;
+        function notify(text) {
+          var toast = $("toast");
+          if (!toast) return;
+          toast.textContent = text;
+          toast.hidden = false;
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(function () {
+            toast.hidden = true;
+          }, 2400);
+        }
+
+        function copyLink(path) {
+          var url = window.location.origin + fileHref(path);
+          var manual = function () {
+            ask({
+              title: "Link do arquivo",
+              text: "Copie o endereço para compartilhar:",
+              input: true,
+              value: url,
+              readOnly: true,
+              confirmLabel: "Fechar",
+              onlyOk: true,
+            });
           };
           if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(url).then(restore, function () {
-              window.prompt("Link do arquivo:", url);
-            });
+            navigator.clipboard.writeText(url).then(function () {
+              notify("link copiado");
+            }, manual);
           } else {
-            window.prompt("Link do arquivo:", url);
+            manual();
           }
         }
 
-        function removeFile(name) {
-          if (!window.confirm("Apagar " + name + " do aparelho?")) return;
-          fetch("/api/files/" + encodeURIComponent(name), { method: "DELETE" })
-            .then(tickFiles)
-            .catch(function () {
-              $("filesMeta").textContent = "não foi possível apagar";
-            });
+        function removeEntry(item) {
+          var pergunta =
+            item.kind === "folder"
+              ? "A pasta " + item.name + " e tudo que está dentro dela somem."
+              : item.name + " some do aparelho.";
+          confirmar(pergunta, {
+            title: "Apagar",
+            confirmLabel: "Apagar",
+            tone: "danger",
+          }).then(function (sim) {
+            if (!sim) return;
+            fetch("/api/files/" + encodeURIComponent(item.path), {
+              method: "DELETE",
+            })
+              .then(function () {
+                closePreview();
+                notify(item.name + " apagado");
+                tickFiles();
+              })
+              .catch(function () {
+                notify("não foi possível apagar");
+              });
+          });
         }
 
-        function hudButton(label, tone) {
-          var button = document.createElement("button");
-          button.className = "hud-btn";
-          button.type = "button";
-          button.textContent = label;
-          button.dataset.label = label;
-          if (tone) button.dataset.tone = tone;
-          return button;
-        }
-
-        function createFileRow(file) {
-          var row = document.createElement("article");
-          row.className = "file-row";
-
-          var thumb = document.createElement("div");
-          thumb.className = "file-thumb";
+        // ---- prévia --------------------------------------------------------
+        function previewNode(file) {
+          var href = fileHref(file.path);
           if (file.type.indexOf("image/") === 0) {
-            var preview = document.createElement("img");
-            preview.src = fileHref(file.name);
-            preview.alt = "";
-            preview.loading = "lazy";
-            thumb.appendChild(preview);
-          } else {
-            thumb.textContent = fileExt(file.name);
+            var image = document.createElement("img");
+            image.src = href;
+            image.alt = file.name;
+            return image;
           }
+          if (file.type.indexOf("video/") === 0) {
+            var video = document.createElement("video");
+            video.src = href;
+            video.controls = true;
+            video.preload = "metadata";
+            return video;
+          }
+          if (file.type.indexOf("audio/") === 0) {
+            var audio = document.createElement("audio");
+            audio.src = href;
+            audio.controls = true;
+            return audio;
+          }
+          if (file.type === "application/pdf") {
+            var frame = document.createElement("iframe");
+            frame.src = href;
+            frame.title = file.name;
+            return frame;
+          }
+          if (file.type === "text/plain") {
+            var block = document.createElement("pre");
+            block.textContent = "lendo…";
+            fetch(href, { cache: "no-store" })
+              .then(function (response) {
+                return response.text();
+              })
+              .then(function (text) {
+                block.textContent =
+                  text.length > 4000 ? text.slice(0, 4000) + "\n…" : text;
+              })
+              .catch(function () {
+                block.textContent = "não foi possível ler o arquivo";
+              });
+            return block;
+          }
+          var empty = document.createElement("span");
+          empty.className = "preview-empty";
+          empty.textContent = "sem prévia para este tipo";
+          return empty;
+        }
 
-          var copy = document.createElement("div");
-          var link = document.createElement("a");
-          link.className = "file-name";
-          link.href = fileHref(file.name, !file.inline);
-          link.target = "_blank";
-          link.rel = "noopener";
-          link.textContent = file.name;
-          link.title = file.name;
-          var meta = document.createElement("span");
-          meta.className = "file-meta";
-          meta.textContent = fmtBytes(file.size) + " · " + since(file.mtime);
-          copy.append(link, meta);
-
-          var actions = document.createElement("div");
-          actions.className = "file-actions";
-          var open = document.createElement("a");
-          open.className = "hud-btn";
-          open.href = fileHref(file.name, !file.inline);
-          open.target = "_blank";
-          open.rel = "noopener";
+        function showPreview(file) {
+          var body = $("previewBody");
+          body.textContent = "";
+          body.appendChild(previewNode(file));
+          $("previewName").textContent = file.name;
+          var open = $("previewOpen");
+          open.href = fileHref(file.path, !file.inline);
           open.textContent = file.inline ? "Abrir" : "Baixar";
-          var share = hudButton("Link");
-          share.addEventListener("click", function () {
-            copyLink(file.name, share);
-          });
-          var drop = hudButton("Apagar", "danger");
-          drop.addEventListener("click", function () {
-            removeFile(file.name);
-          });
-          actions.append(open, share, drop);
+          var download = $("previewDownload");
+          download.href = fileHref(file.path, true);
+          download.setAttribute("download", file.name);
+          $("previewLink").onclick = function () {
+            copyLink(file.path);
+          };
+          $("previewDelete").onclick = function () {
+            removeEntry({ kind: "file", name: file.name, path: file.path });
+          };
+          preview.hidden = false;
+        }
 
-          row.append(thumb, copy, actions);
-          return row;
+        function closePreview() {
+          if (!preview || preview.hidden) return;
+          preview.hidden = true;
+          $("previewBody").textContent = "";
+        }
+
+        // ---- navegação -----------------------------------------------------
+        function goTo(path) {
+          here = path || "";
+          tickFiles();
+        }
+
+        function renderCrumbs() {
+          var nav = $("filesCrumbs");
+          nav.textContent = "";
+          var parts = here ? here.split("/") : [];
+          var crumb = function (label, target, current) {
+            var button = document.createElement("button");
+            button.className = "crumb";
+            button.type = "button";
+            button.textContent = label;
+            if (current) button.setAttribute("aria-current", "true");
+            else
+              button.addEventListener("click", function () {
+                goTo(target);
+              });
+            nav.appendChild(button);
+          };
+          crumb("cofre", "", !parts.length);
+          var walked = "";
+          parts.forEach(function (part, index) {
+            var sep = document.createElement("span");
+            sep.className = "crumb-sep";
+            sep.textContent = "›";
+            nav.appendChild(sep);
+            walked = joinPath(walked, part);
+            crumb(part, walked, index === parts.length - 1);
+          });
+          $("filesUp").disabled = !here;
+        }
+
+        function tileArt(item) {
+          var art = document.createElement("span");
+          art.className = "tile-art";
+          if (item.kind === "folder") {
+            art.appendChild(folderIcon());
+            return art;
+          }
+          if (item.type.indexOf("image/") === 0) {
+            var thumb = document.createElement("img");
+            thumb.src = fileHref(item.path);
+            thumb.alt = "";
+            thumb.loading = "lazy";
+            art.appendChild(thumb);
+            return art;
+          }
+          var ext = document.createElement("span");
+          ext.className = "tile-ext";
+          ext.textContent = fileExt(item.name);
+          art.appendChild(ext);
+          return art;
+        }
+
+        function createTile(item) {
+          // div com role de botão: o "apagar" é um botão de verdade dentro dele,
+          // e botão dentro de botão não existe em HTML.
+          var tile = document.createElement("div");
+          tile.className = "tile";
+          tile.dataset.kind = item.kind;
+          tile.setAttribute("role", "button");
+          tile.tabIndex = 0;
+          tile.title = item.name;
+
+          var name = document.createElement("span");
+          name.className = "tile-name";
+          name.textContent = item.name;
+          var meta = document.createElement("span");
+          meta.className = "tile-meta";
+          meta.textContent =
+            item.kind === "folder"
+              ? item.items
+                ? item.items + (item.items === 1 ? " item" : " itens")
+                : "vazia"
+              : fmtBytes(item.size) + " · " + since(item.mtime);
+
+          var drop = document.createElement("button");
+          drop.className = "tile-drop";
+          drop.type = "button";
+          drop.textContent = "✕";
+          drop.title = "Apagar " + item.name;
+          drop.setAttribute("aria-label", "Apagar " + item.name);
+          drop.addEventListener("click", function (event) {
+            event.stopPropagation();
+            removeEntry(item);
+          });
+
+          var enter = function () {
+            if (item.kind === "folder") goTo(item.path);
+            else showPreview(item);
+          };
+          tile.addEventListener("click", enter);
+          tile.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              enter();
+            }
+          });
+
+          tile.append(tileArt(item), name, meta, drop);
+          return tile;
         }
 
         function renderFiles(data) {
+          var folders = data && Array.isArray(data.folders) ? data.folders : [];
           var files = data && Array.isArray(data.files) ? data.files : [];
+          here = (data && data.path) || "";
           maxUpload = (data && data.maxBytes) || 0;
-          $("filesMeta").textContent = files.length
-            ? fmtBytes(data.total) + " guardados"
-            : "cofre vazio";
+          renderCrumbs();
+
+          var resumo = [];
+          if (folders.length)
+            resumo.push(
+              folders.length + (folders.length === 1 ? " pasta" : " pastas"),
+            );
+          if (files.length) resumo.push(fmtBytes(data.total));
+          $("filesMeta").textContent = resumo.length
+            ? resumo.join(" · ")
+            : "pasta vazia";
           $("filesCount").textContent = files.length
             ? files.length + (files.length === 1 ? " arquivo" : " arquivos")
             : "vazio";
           if (maxUpload)
-            $("dropHint").textContent =
-              "Arraste aqui ou toque para escolher · até " +
-              fmtBytes(maxUpload) +
-              " por arquivo";
+            $("dropchip").title =
+              "Enviar para esta pasta · até " + fmtBytes(maxUpload) + " por arquivo";
 
-          var list = $("fileList");
-          list.textContent = "";
-          if (!files.length) {
+          fileList.textContent = "";
+          if (!folders.length && !files.length) {
             var empty = document.createElement("div");
             empty.className = "empty-item";
-            empty.textContent =
-              "Nada enviado ainda. O que entrar aqui fica acessível de qualquer lugar, pelo mesmo endereço do painel.";
-            list.appendChild(empty);
+            empty.textContent = here
+              ? "Pasta vazia."
+              : "Nada guardado ainda. O que entrar aqui abre de qualquer lugar, pelo mesmo endereço do painel.";
+            fileList.appendChild(empty);
             return;
           }
+          folders.forEach(function (folder) {
+            fileList.appendChild(
+              createTile({
+                kind: "folder",
+                name: folder.name,
+                path: folder.path,
+                items: folder.items,
+              }),
+            );
+          });
           files.forEach(function (file) {
-            list.appendChild(createFileRow(file));
+            file.kind = "file";
+            fileList.appendChild(createTile(file));
           });
         }
 
         function tickFiles() {
-          return fetch("/api/files", { cache: "no-store" })
+          return fetch("/api/files?path=" + encodeURIComponent(here), {
+            cache: "no-store",
+          })
             .then(function (response) {
               if (!response.ok) throw new Error("status " + response.status);
               return response.json();
@@ -2790,7 +3454,9 @@
             });
         }
 
+        // ---- envio ---------------------------------------------------------
         function uploadFile(file) {
+          var destino = here;
           var item = document.createElement("div");
           item.className = "upload-item";
           setState(item, "sending");
@@ -2824,7 +3490,13 @@
           }
 
           var xhr = new XMLHttpRequest();
-          xhr.open("POST", "/api/files?name=" + encodeURIComponent(file.name));
+          xhr.open(
+            "POST",
+            "/api/files?path=" +
+              encodeURIComponent(destino) +
+              "&name=" +
+              encodeURIComponent(file.name),
+          );
           xhr.upload.onprogress = function (event) {
             if (!event.lengthComputable) return;
             var value = Math.round((event.loaded / event.total) * 100);
@@ -2842,7 +3514,8 @@
               } catch (e) {}
               finish("error", reason, 8000);
             }
-            tickFiles();
+            // Só recarrega se ainda estamos na pasta que recebeu o arquivo.
+            if (destino === here) tickFiles();
           };
           xhr.onerror = function () {
             finish("error", "sem conexão", 8000);
@@ -2854,28 +3527,74 @@
           Array.prototype.slice.call(list || []).forEach(uploadFile);
         }
 
+        function newFolder() {
+          ask({
+            title: "Nova pasta",
+            text: "Como ela vai se chamar?",
+            input: true,
+            placeholder: "Fotos",
+            confirmLabel: "Criar",
+          }).then(function (name) {
+            if (!name || name === true) return;
+            fetch(
+              "/api/folders?path=" + encodeURIComponent(joinPath(here, name)),
+              { method: "POST" },
+            )
+              .then(tickFiles)
+              .catch(function () {
+                notify("não foi possível criar a pasta");
+              });
+          });
+        }
+
+        function applyView(view) {
+          fileList.dataset.view = view;
+          $("viewBtn").textContent = view === "grid" ? "▤" : "▦";
+          try {
+            localStorage.setItem("sb-files-view", view);
+          } catch (e) {}
+        }
+
         if (dropzone) {
-          dropzone.addEventListener("click", function () {
+          var stored = "grid";
+          try {
+            stored = localStorage.getItem("sb-files-view") || "grid";
+          } catch (e) {}
+          applyView(stored === "list" ? "list" : "grid");
+
+          $("viewBtn").addEventListener("click", function () {
+            applyView(fileList.dataset.view === "grid" ? "list" : "grid");
+          });
+          $("filesUp").addEventListener("click", function () {
+            var cut = here.lastIndexOf("/");
+            goTo(cut === -1 ? "" : here.slice(0, cut));
+          });
+          $("newFolderBtn").addEventListener("click", newFolder);
+          dropchip.addEventListener("click", function () {
             fileInput.click();
           });
           fileInput.addEventListener("change", function () {
             sendAll(fileInput.files);
             fileInput.value = "";
           });
-          ["dragenter", "dragover"].forEach(function (type) {
-            dropzone.addEventListener(type, function (event) {
+
+          // Soltar vale no painel inteiro e no chip.
+          [dropzone, dropchip].forEach(function (zone) {
+            ["dragenter", "dragover"].forEach(function (type) {
+              zone.addEventListener(type, function (event) {
+                event.preventDefault();
+                zone.dataset.drag = "true";
+              });
+            });
+            ["dragleave", "dragend", "drop"].forEach(function (type) {
+              zone.addEventListener(type, function () {
+                zone.dataset.drag = "false";
+              });
+            });
+            zone.addEventListener("drop", function (event) {
               event.preventDefault();
-              dropzone.dataset.drag = "true";
+              sendAll(event.dataTransfer && event.dataTransfer.files);
             });
-          });
-          ["dragleave", "dragend", "drop"].forEach(function (type) {
-            dropzone.addEventListener(type, function () {
-              dropzone.dataset.drag = "false";
-            });
-          });
-          dropzone.addEventListener("drop", function (event) {
-            event.preventDefault();
-            sendAll(event.dataTransfer && event.dataTransfer.files);
           });
           // Soltar fora da área não pode fazer o navegador abrir o arquivo.
           ["dragover", "drop"].forEach(function (type) {
@@ -2883,10 +3602,43 @@
               if (!dropzone.contains(event.target)) event.preventDefault();
             });
           });
+
+          $("previewClose").addEventListener("click", closePreview);
+          preview.addEventListener("click", function (event) {
+            if (event.target === preview) closePreview();
+          });
+
+          $("modalOk").addEventListener("click", function () {
+            var field = $("modalInput");
+            closeModal(field.hidden ? true : field.value.trim());
+          });
+          $("modalCancel").addEventListener("click", function () {
+            closeModal(null);
+          });
+          $("modalClose").addEventListener("click", function () {
+            closeModal(null);
+          });
+          modal.addEventListener("click", function (event) {
+            if (event.target === modal) closeModal(null);
+          });
+          $("modalInput").addEventListener("keydown", function (event) {
+            if (event.key !== "Enter") return;
+            event.preventDefault();
+            $("modalOk").click();
+          });
+
+          document.addEventListener("keydown", function (event) {
+            if (event.key !== "Escape") return;
+            // O popup está por cima da prévia: fecha um de cada vez.
+            if (!modal.hidden) closeModal(null);
+            else closePreview();
+          });
+
           tickFiles();
         }
 
         var boot = $("boot");
+
         if (boot)
           setTimeout(function () {
             boot.remove();

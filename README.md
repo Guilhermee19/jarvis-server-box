@@ -7,7 +7,11 @@ Painel de status do meu servidor de bolso — um Android rodando Termux, visto n
 - **Memória e disco** — RAM, uso de disco
 - **Operação** — server-box ativo e rotinas automáticas configuradas
 - **Cron** — horários e próxima execução de cada rotina
+- **Arquivos** — cofre com pastas: envia do celular ou do computador e abre de qualquer lugar
 - **Digest** — painel opcional; só aparece quando `~/newsdigest` existe
+
+A interface é um HUD no estilo J.A.R.V.I.S. — ciano sobre azul-noite, reator que muda
+de cor com o estado do host — e cabe numa tela só, sem rolagem.
 
 Zero dependências: Node puro, sem `npm install`, sem internet pra fora da rede local.
 
@@ -40,6 +44,39 @@ Abre no navegador:
 - **Digest** não faz parte da instalação básica. Ele só aparece depois que o módulo `~/newsdigest` existir.
 
 Se a bateria aparecer sem leitura, instale o pacote `termux-api` no Termux e o aplicativo Termux:API correspondente. O painel tenta `termux-battery-status` como alternativa.
+
+## Arquivos
+
+A aba **Arquivos** transforma o painel numa gaveta do aparelho: sobe arquivo
+arrastando (ou tocando no chip da barra), organiza em pastas, e abre de qualquer
+lugar pelo mesmo endereço do painel — atrás do mesmo PIN.
+
+- **Pastas** — criar, entrar, voltar pelo caminho no topo, apagar (leva o conteúdo junto).
+- **Prévia** — imagem, vídeo, áudio, PDF e texto abrem numa sobreposição, sem sair da página.
+- **Compartilhar** — o botão *Copiar link* põe o endereço do arquivo na área de transferência.
+- **Grade ou lista** — o botão à direita da barra alterna, e a escolha fica guardada.
+
+Onde os arquivos ficam e qual o teto de tamanho:
+
+| Variável | Padrão | O que faz |
+| --- | --- | --- |
+| `SERVERBOX_FILES_DIR` | `~/server-box-files` | Pasta raiz do cofre. Fica fora do repositório de propósito: o `deploy.sh` troca o código sem encostar nos arquivos. |
+| `SERVERBOX_MAX_UPLOAD` | `536870912` (512 MB) | Limite por arquivo. Acima disso o envio é recusado com 413 e nada é gravado. |
+
+Nos bastidores o upload é o corpo cru do POST — sem multipart, sem dependência —
+e vai direto para o disco em streaming, porque a RAM do aparelho é curta:
+
+```
+GET    /api/files?path=Fotos           lista a pasta (subpastas + arquivos)
+POST   /api/files?path=Fotos&name=x.png  grava o corpo da requisição como x.png
+POST   /api/folders?path=Fotos/2024    cria a pasta
+DELETE /api/files/<caminho>            apaga arquivo ou pasta
+GET    /files/<caminho>                entrega o arquivo (aceita Range, para dar seek em vídeo)
+```
+
+Arquivo enviado é conteúdo de terceiro, então sai com `Content-Security-Policy:
+default-src 'none'; sandbox`; imagem, vídeo, áudio, PDF e texto abrem na aba, e o
+resto — HTML e SVG inclusive — baixa em vez de rodar na origem do painel.
 
 ## CI/CD
 
